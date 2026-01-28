@@ -50,6 +50,9 @@ const elements = {
   micActivate: document.getElementById("mic-activate"),
   micErrorActions: document.getElementById("mic-error-actions"),
   micRetry: document.getElementById("mic-retry"),
+  micButton: document.getElementById("mic-button"),
+  transcript: document.getElementById("transcript"),
+  micStatus: document.getElementById("mic-status"),
   scoresList: document.getElementById("scores-list"),
   skipButton: document.getElementById("skip-button"),
 };
@@ -158,6 +161,13 @@ function updateCountdown() {
   elements.timerValue.textContent = remaining.toFixed(2);
   if (remaining <= 0 && !state.answerHandled) {
     handleTimeout();
+function updateCountdown() {
+  const elapsed = (Date.now() - state.timerStart) / 1000;
+  const remaining = Math.max(0, MAX_TIME - elapsed);
+  elements.timerValue.textContent = remaining.toFixed(2);
+  if (remaining <= 0) {
+    stopListening();
+    handleAnswer("");
   }
 }
 
@@ -314,6 +324,8 @@ function safeRestartListeningIfNeeded() {
 
 function handleAnswer(transcript) {
   if (state.answerHandled) return;
+function handleAnswer(transcript) {
+  stopListening();
   const elapsed = (Date.now() - state.timerStart) / 1000;
   const turn = state.turns[state.currentTurnIndex];
   const isValid = transcript
@@ -326,6 +338,9 @@ function handleAnswer(transcript) {
   const points = computeScore(elapsed);
   state.players[turn.playerIndex].score += points;
   finalizeTurn(`Validé +${points} points !`);
+  const points = isValid ? computeScore(elapsed) : 0;
+  state.players[turn.playerIndex].score += points;
+  goToNextTurn();
 }
 
 function goToNextTurn() {
@@ -349,6 +364,10 @@ function prepareTurn() {
   } else {
     showMicGate();
   }
+  elements.transcript.textContent = "—";
+  elements.micStatus.textContent = "";
+  elements.micButton.disabled = false;
+  showScreen("game");
 }
 
 function showScores() {
@@ -373,6 +392,7 @@ function setupRecognition() {
   if (!SpeechRecognition) {
     elements.micStatus.textContent = i18n.fr.errors.micUnavailable;
     elements.micErrorActions.hidden = false;
+    elements.micButton.disabled = true;
     return;
   }
 
@@ -424,6 +444,26 @@ function setupRecognition() {
   recognition.onend = () => {
     state.isListening = false;
     safeRestartListeningIfNeeded();
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    elements.transcript.textContent = transcript;
+    handleAnswer(transcript);
+  };
+
+  recognition.onerror = (event) => {
+    if (event.error === "not-allowed") {
+      elements.micStatus.textContent = i18n.fr.errors.micDenied;
+    } else {
+      elements.micStatus.textContent = "Erreur micro : " + event.error;
+    }
+    stopListening();
+  };
+
+  recognition.onend = () => {
+    elements.micButton.disabled = false;
   };
 
   state.recognition = recognition;
@@ -437,6 +477,17 @@ function stopListening() {
   } catch (error) {
     // ignore stop errors
   }
+function startListening() {
+  if (!state.recognition) return;
+  elements.micStatus.textContent = "Écoute en cours...";
+  elements.micButton.disabled = true;
+  startTimer();
+  state.recognition.start();
+}
+
+function stopListening() {
+  if (!state.recognition) return;
+  state.recognition.stop();
 }
 
 function setupAdCountdown() {
@@ -504,6 +555,9 @@ function resetGame() {
     clearTimeout(state.restartTimeoutId);
     state.restartTimeoutId = null;
   }
+  state.players = [];
+  state.turns = [];
+  state.currentTurnIndex = 0;
 }
 
 function bindActions() {
@@ -553,6 +607,8 @@ function bindActions() {
   elements.skipButton.addEventListener("click", () =>
     finalizeTurn("Passé : 0 point.")
   );
+  elements.micButton.addEventListener("click", startListening);
+  elements.skipButton.addEventListener("click", () => handleAnswer(""));
 }
 
 function init() {
