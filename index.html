@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Brain'z — Jeu vocal</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="psychedelic-bg" aria-hidden="true"></div>
+    <header class="site-header">
+      <img src="assets/logo.svg" alt="Logo Brain'z" class="logo" />
+    </header>
+
+    <main class="app">
+      <section id="screen-home" class="screen is-active" aria-labelledby="home-title">
+        <h1 id="home-title" class="visually-hidden">Brain'z</h1>
+        <p class="tagline">Le jeu vocal qui teste ta rapidité 🎤⚡</p>
+        <div class="actions">
+          <button class="primary" data-action="start-challenge">Challenge entre potes</button>
+          <button class="secondary" data-action="start-training">Entrainement</button>
+        </div>
+        <button class="link" data-action="open-legal">Mentions légales</button>
+      </section>
+
+      <section id="screen-setup" class="screen" aria-labelledby="setup-title">
+        <h2 id="setup-title">Préparez le challenge</h2>
+        <label class="field">
+          Nombre de joueurs
+          <select id="player-count">
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+        </label>
+        <div id="player-fields" class="player-fields"></div>
+        <p id="setup-error" class="error" role="alert"></p>
+        <div class="actions">
+          <button class="primary" data-action="confirm-setup">Go !</button>
+          <button class="ghost" data-action="back-home">Retour</button>
+        </div>
+      </section>
+
+      <section id="screen-ad" class="screen" aria-labelledby="ad-title">
+        <h2 id="ad-title">Pause pub (challenge)</h2>
+        <div class="ad-placeholder">
+          <p>📺 Espace vidéo publicitaire</p>
+        </div>
+        <p class="ad-note">Merci de patienter quelques secondes avant de lancer la partie.</p>
+        <button class="primary" id="launch-game" disabled>Lancer la partie</button>
+      </section>
+
+      <section id="screen-game" class="screen" aria-labelledby="game-title">
+        <h2 id="game-title">Question en cours</h2>
+        <div class="mic-gate" id="mic-gate" aria-live="polite">
+          <div class="mic-gate-card">
+            <p>Active le micro pour lancer la partie 🎙️</p>
+            <button class="primary" id="mic-activate">Activer le micro / Démarrer</button>
+          </div>
+        </div>
+        <div class="game-panel">
+          <p class="player-turn">Au tour de <span id="current-player">Joueur</span></p>
+          <p class="question" id="current-question">Question</p>
+          <div class="timer" aria-live="polite">
+            ⏱️ <span id="timer-value">10.00</span>s
+          </div>
+        </div>
+        <div class="mic-panel">
+          <p class="transcript">Transcription : <span id="transcript">—</span></p>
+          <p id="mic-status" class="status"></p>
+          <div id="mic-error-actions" class="mic-error-actions" hidden>
+            <button class="secondary" id="mic-retry">Réessayer</button>
+            <button class="ghost" data-action="back-home">Retour</button>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="ghost" id="skip-button">Passer</button>
+          <button class="ghost" data-action="back-home">Quitter</button>
+        </div>
+      </section>
+
+      <section id="screen-scores" class="screen" aria-labelledby="scores-title">
+        <h2 id="scores-title">Classement final</h2>
+        <div class="scores" id="scores-list"></div>
+        <div class="adense-placeholder">
+          <p>📢 Placeholder Google AdSense</p>
+        </div>
+        <div class="actions">
+          <button class="primary" data-action="restart">Recommencer</button>
+          <button class="secondary" data-action="back-home">Retour à l'accueil</button>
+        </div>
+      </section>
+
+      <section id="screen-legal" class="screen" aria-labelledby="legal-title">
+        <h2 id="legal-title">Mentions légales</h2>
+        <div class="legal-content">
+          <h3>Éditeur</h3>
+          <p>Placeholder éditeur — à compléter.</p>
+          <h3>Hébergeur</h3>
+          <p>Netlify, Inc.</p>
+          <h3>Micro & Web Speech API</h3>
+          <p>Cette application utilise la reconnaissance vocale du navigateur (Web Speech API).</p>
+          <h3>Cookies & publicité</h3>
+          <p>Des espaces publicitaires sont prévus. Aucun cookie n'est installé par défaut.</p>
+        </div>
+        <button class="secondary" data-action="back-home">Retour</button>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Brain'z — 100% fun, 0% backend.</p>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
