@@ -52,6 +52,12 @@
 
       <section id="screen-game" class="screen" aria-labelledby="game-title">
         <h2 id="game-title">Question en cours</h2>
+        <div class="mic-gate" id="mic-gate" aria-live="polite">
+          <div class="mic-gate-card">
+            <p>Active le micro pour lancer la partie 🎙️</p>
+            <button class="primary" id="mic-activate">Activer le micro / Démarrer</button>
+          </div>
+        </div>
         <div class="game-panel">
           <p class="player-turn">Au tour de <span id="current-player">Joueur</span></p>
           <p class="question" id="current-question">Question</p>
@@ -60,6 +66,16 @@
           </div>
         </div>
         <div class="mic-panel">
+          <p class="transcript">Transcription : <span id="transcript">—</span></p>
+          <p id="mic-status" class="status"></p>
+          <div id="mic-error-actions" class="mic-error-actions" hidden>
+            <button class="secondary" id="mic-retry">Réessayer</button>
+            <button class="ghost" data-action="back-home">Retour</button>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="ghost" id="skip-button">Passer</button>
+          <button class="ghost" data-action="back-home">Quitter</button>
           <button class="primary" id="mic-button">🎙️ Répondre</button>
           <p class="transcript">Transcription : <span id="transcript">—</span></p>
           <p id="mic-status" class="status"></p>

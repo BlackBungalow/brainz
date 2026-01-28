@@ -70,6 +70,7 @@ body {
   padding: 2rem;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(12px);
+  position: relative;
 }
 
 .screen.is-active {
@@ -201,6 +202,38 @@ button:hover:not(:disabled) {
 .transcript,
 .status {
   text-align: center;
+}
+
+.mic-gate {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 4, 20, 0.85);
+  border-radius: 24px;
+  z-index: 2;
+}
+
+.mic-gate.is-active {
+  display: flex;
+}
+
+.mic-gate-card {
+  background: rgba(10, 8, 30, 0.95);
+  padding: 2rem;
+  border-radius: 20px;
+  text-align: center;
+  display: grid;
+  gap: 1rem;
+  max-width: 360px;
+}
+
+.mic-error-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .scores {

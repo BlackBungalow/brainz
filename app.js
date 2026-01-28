@@ -29,6 +29,11 @@ const state = {
   timerId: null,
   timerStart: 0,
   countdownId: null,
+  isQuestionActive: false,
+  isListening: false,
+  answerHandled: false,
+  micActivated: false,
+  restartTimeoutId: null,
 };
 
 const elements = {
@@ -39,6 +44,12 @@ const elements = {
   currentPlayer: document.getElementById("current-player"),
   currentQuestion: document.getElementById("current-question"),
   timerValue: document.getElementById("timer-value"),
+  transcript: document.getElementById("transcript"),
+  micStatus: document.getElementById("mic-status"),
+  micGate: document.getElementById("mic-gate"),
+  micActivate: document.getElementById("mic-activate"),
+  micErrorActions: document.getElementById("mic-error-actions"),
+  micRetry: document.getElementById("mic-retry"),
   micButton: document.getElementById("mic-button"),
   transcript: document.getElementById("transcript"),
   micStatus: document.getElementById("mic-status"),
@@ -140,6 +151,16 @@ function resetTimer() {
   elements.timerValue.textContent = MAX_TIME.toFixed(2);
 }
 
+function getRemainingSeconds() {
+  const elapsed = (Date.now() - state.timerStart) / 1000;
+  return Math.max(0, MAX_TIME - elapsed);
+}
+
+function updateCountdown() {
+  const remaining = getRemainingSeconds();
+  elements.timerValue.textContent = remaining.toFixed(2);
+  if (remaining <= 0 && !state.answerHandled) {
+    handleTimeout();
 function updateCountdown() {
   const elapsed = (Date.now() - state.timerStart) / 1000;
   const remaining = Math.max(0, MAX_TIME - elapsed);
@@ -236,6 +257,73 @@ function clearError() {
   elements.setupError.textContent = "";
 }
 
+function resetQuestionUI() {
+  elements.transcript.textContent = "—";
+  elements.micStatus.textContent = "";
+  elements.micErrorActions.hidden = true;
+}
+
+function showMicGate() {
+  elements.micGate.classList.add("is-active");
+}
+
+function hideMicGate() {
+  elements.micGate.classList.remove("is-active");
+}
+
+function scheduleNextTurn() {
+  const delay = 700 + Math.random() * 500;
+  setTimeout(goToNextTurn, delay);
+}
+
+function finalizeTurn(message) {
+  if (state.answerHandled) return;
+  state.answerHandled = true;
+  state.isQuestionActive = false;
+  stopListening();
+  elements.micStatus.textContent = message;
+  scheduleNextTurn();
+}
+
+function handleTimeout() {
+  finalizeTurn("Temps écoulé : 0 point.");
+}
+
+function startQuestionFlow() {
+  resetQuestionUI();
+  state.isQuestionActive = true;
+  state.answerHandled = false;
+  resetTimer();
+  startTimer();
+  startListeningForCurrentQuestion();
+}
+
+function startListeningForCurrentQuestion() {
+  if (!state.recognition || state.isListening || !state.isQuestionActive) return;
+  const remaining = getRemainingSeconds();
+  if (remaining <= 0.5) return;
+  try {
+    state.isListening = true;
+    state.recognition.start();
+    elements.micStatus.textContent = "J'écoute...";
+  } catch (error) {
+    state.isListening = false;
+  }
+}
+
+function safeRestartListeningIfNeeded() {
+  if (!state.isQuestionActive || state.answerHandled) return;
+  if (state.restartTimeoutId) return;
+  const remaining = getRemainingSeconds();
+  if (remaining <= 0.5) return;
+  state.restartTimeoutId = setTimeout(() => {
+    state.restartTimeoutId = null;
+    startListeningForCurrentQuestion();
+  }, 200);
+}
+
+function handleAnswer(transcript) {
+  if (state.answerHandled) return;
 function handleAnswer(transcript) {
   stopListening();
   const elapsed = (Date.now() - state.timerStart) / 1000;
@@ -243,6 +331,13 @@ function handleAnswer(transcript) {
   const isValid = transcript
     ? validateAnswer(turn.question.answer, transcript)
     : false;
+  if (!isValid) {
+    elements.micStatus.textContent = "Pas encore...";
+    return;
+  }
+  const points = computeScore(elapsed);
+  state.players[turn.playerIndex].score += points;
+  finalizeTurn(`Validé +${points} points !`);
   const points = isValid ? computeScore(elapsed) : 0;
   state.players[turn.playerIndex].score += points;
   goToNextTurn();
@@ -262,6 +357,13 @@ function prepareTurn() {
   const turn = state.turns[state.currentTurnIndex];
   elements.currentPlayer.textContent = state.players[turn.playerIndex].name;
   elements.currentQuestion.textContent = turn.question.question;
+  resetQuestionUI();
+  showScreen("game");
+  if (state.micActivated) {
+    startQuestionFlow();
+  } else {
+    showMicGate();
+  }
   elements.transcript.textContent = "—";
   elements.micStatus.textContent = "";
   elements.micButton.disabled = false;
@@ -270,6 +372,7 @@ function prepareTurn() {
 
 function showScores() {
   showScreen("scores");
+  stopListening();
   const sorted = [...state.players].sort((a, b) => b.score - a.score);
   elements.scoresList.innerHTML = "";
   sorted.forEach((player, index) => {
@@ -288,12 +391,59 @@ function setupRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
     elements.micStatus.textContent = i18n.fr.errors.micUnavailable;
+    elements.micErrorActions.hidden = false;
     elements.micButton.disabled = true;
     return;
   }
 
   const recognition = new SpeechRecognition();
   recognition.lang = "fr-FR";
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => {
+    state.isListening = true;
+  };
+
+  recognition.onresult = (event) => {
+    let interimTranscript = "";
+    let finalTranscript = "";
+    for (let i = event.resultIndex; i < event.results.length; i += 1) {
+      const result = event.results[i];
+      if (result.isFinal) {
+        finalTranscript += result[0].transcript + " ";
+      } else {
+        interimTranscript += result[0].transcript + " ";
+      }
+    }
+    const combined = (finalTranscript || interimTranscript).trim();
+    if (combined) {
+      elements.transcript.textContent = combined;
+    }
+    if (finalTranscript.trim()) {
+      handleAnswer(finalTranscript.trim());
+    }
+  };
+
+  recognition.onerror = (event) => {
+    state.isListening = false;
+    if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+      elements.micStatus.textContent = i18n.fr.errors.micDenied;
+      elements.micErrorActions.hidden = false;
+      state.isQuestionActive = false;
+      return;
+    }
+    if (event.error === "no-speech" || event.error === "aborted") {
+      safeRestartListeningIfNeeded();
+      return;
+    }
+    elements.micStatus.textContent = "Erreur micro : " + event.error;
+    safeRestartListeningIfNeeded();
+  };
+
+  recognition.onend = () => {
+    state.isListening = false;
+    safeRestartListeningIfNeeded();
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
 
@@ -319,6 +469,14 @@ function setupRecognition() {
   state.recognition = recognition;
 }
 
+function stopListening() {
+  if (!state.recognition) return;
+  state.isListening = false;
+  try {
+    state.recognition.stop();
+  } catch (error) {
+    // ignore stop errors
+  }
 function startListening() {
   if (!state.recognition) return;
   elements.micStatus.textContent = "Écoute en cours...";
@@ -353,6 +511,7 @@ async function startGame(mode) {
   state.mode = mode;
   state.currentTurnIndex = 0;
   state.turns = [];
+  state.micActivated = false;
   state.questions = await loadQuestions();
 
   if (!state.questions.length) {
@@ -384,6 +543,18 @@ function handleSetupConfirm() {
 
 function resetGame() {
   resetTimer();
+  stopListening();
+  hideMicGate();
+  state.players = [];
+  state.turns = [];
+  state.currentTurnIndex = 0;
+  state.isQuestionActive = false;
+  state.answerHandled = false;
+  state.micActivated = false;
+  if (state.restartTimeoutId) {
+    clearTimeout(state.restartTimeoutId);
+    state.restartTimeoutId = null;
+  }
   state.players = [];
   state.turns = [];
   state.currentTurnIndex = 0;
@@ -422,6 +593,20 @@ function bindActions() {
 
   elements.playerCount.addEventListener("change", updatePlayerFields);
   elements.launchGame.addEventListener("click", () => startGame("challenge"));
+  elements.micActivate.addEventListener("click", () => {
+    state.micActivated = true;
+    hideMicGate();
+    startQuestionFlow();
+  });
+  elements.micRetry.addEventListener("click", () => {
+    elements.micErrorActions.hidden = true;
+    state.micActivated = true;
+    hideMicGate();
+    startQuestionFlow();
+  });
+  elements.skipButton.addEventListener("click", () =>
+    finalizeTurn("Passé : 0 point.")
+  );
   elements.micButton.addEventListener("click", startListening);
   elements.skipButton.addEventListener("click", () => handleAnswer(""));
 }
