@@ -1,0 +1,256 @@
+:root {
+  color-scheme: dark;
+  --primary: #ff4fd8;
+  --secondary: #38f6ff;
+  --accent: #ffe04d;
+  --bg: #0b0826;
+  --text: #f7f7ff;
+  --glass: rgba(7, 7, 24, 0.65);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Trebuchet MS", "Verdana", sans-serif;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+.psychedelic-bg {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 20% 20%, #ff5be1, transparent 45%),
+    radial-gradient(circle at 80% 30%, #44f5ff, transparent 40%),
+    radial-gradient(circle at 50% 80%, #ffe84a, transparent 50%),
+    linear-gradient(120deg, #180b4f 10%, #0b0826 90%);
+  filter: blur(0);
+  animation: pulse 8s ease-in-out infinite alternate;
+  z-index: -1;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    transform: scale(1.05);
+    filter: hue-rotate(20deg);
+  }
+}
+
+.site-header {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 1rem 0.5rem;
+}
+
+.logo {
+  width: min(320px, 80vw);
+}
+
+.app {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.screen {
+  display: none;
+  flex-direction: column;
+  gap: 1.5rem;
+  background: var(--glass);
+  border-radius: 24px;
+  padding: 2rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(12px);
+}
+
+.screen.is-active {
+  display: flex;
+}
+
+.tagline {
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+button {
+  border: none;
+  padding: 0.85rem 1.5rem;
+  border-radius: 999px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.primary {
+  background: var(--primary);
+  color: #1a0922;
+  font-weight: 700;
+}
+
+.secondary {
+  background: var(--secondary);
+  color: #031219;
+  font-weight: 700;
+}
+
+.ghost {
+  background: transparent;
+  border: 2px solid var(--secondary);
+  color: var(--secondary);
+}
+
+.link {
+  background: transparent;
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.field input,
+.field select {
+  padding: 0.6rem;
+  border-radius: 12px;
+  border: none;
+  font-size: 1rem;
+}
+
+.player-fields {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.error {
+  color: #ff8c8c;
+  min-height: 1.5rem;
+}
+
+.ad-placeholder,
+.adense-placeholder {
+  border: 2px dashed rgba(255, 255, 255, 0.4);
+  border-radius: 20px;
+  padding: 2rem;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.ad-note {
+  text-align: center;
+}
+
+.game-panel {
+  display: grid;
+  gap: 1rem;
+  text-align: center;
+}
+
+.player-turn {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.question {
+  font-size: clamp(1.3rem, 2vw, 2rem);
+  font-weight: 700;
+}
+
+.timer {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.mic-panel {
+  display: grid;
+  gap: 1rem;
+  justify-items: center;
+}
+
+.transcript,
+.status {
+  text-align: center;
+}
+
+.scores {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.score-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 80px;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 16px;
+}
+
+.score-rank {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.legal-content {
+  display: grid;
+  gap: 1rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.site-footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+@media (max-width: 600px) {
+  .screen {
+    padding: 1.5rem;
+  }
+
+  .score-row {
+    grid-template-columns: 40px 1fr 60px;
+  }
+}
